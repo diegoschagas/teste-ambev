@@ -40,12 +40,16 @@ public class SaleRepository : ISaleRepository
         return sales ?? Enumerable.Empty<Sale>();
     }
 
-    public async Task<Sale?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<Sale> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return await _context.Sales
+        var sale = await _context.Sales
             .Include(s => s.Items)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 
+        if (sale == null)
+            throw new InvalidOperationException($"Sale with id '{id}' not found.");
+
+        return sale;
     }
 
     public async Task<List<Sale>> SearchAsync(

@@ -21,11 +21,11 @@ public class SearchSaleHandler : IRequestHandler<SearchSaleCommand, List<Sale>>
     public async Task<List<Sale>> Handle(SearchSaleCommand request, CancellationToken cancellationToken)
     {
         return await _saleRepository.SearchAsync(
-            request?.SaleNumber,
+            request?.SaleNumber ?? string.Empty,
             request?.Date,
-            request?.Customer,
+            request?.Customer ?? string.Empty,
             request?.TotalAmount,
-            request?.Branch,
+            request?.Branch ?? string.Empty,
             cancellationToken);
     }
 }

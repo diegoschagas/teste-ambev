@@ -18,7 +18,7 @@ public class SaleItemConfiguration : IEntityTypeConfiguration<SaleItem>
         builder.Property(si => si.UnitPrice).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(si => si.Discount).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(si => si.Total).HasColumnType("decimal(18,2)").IsRequired();
-        builder.Property(si => si.IsCancelled).IsRequired();
+        builder.Property(si => si.Status).IsRequired();
 
         // Foreign key configured in Sale mapping with .HasForeignKey("SaleId")
     }

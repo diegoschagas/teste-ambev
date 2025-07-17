@@ -18,7 +18,7 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.Property(s => s.Customer).IsRequired().HasMaxLength(100);
         builder.Property(s => s.TotalAmount).HasColumnType("decimal(18,2)");
         builder.Property(s => s.Branch).HasMaxLength(100);
-        builder.Property(s => s.IsCancelled).IsRequired();
+        builder.Property(s => s.Status).IsRequired();
 
         builder.HasMany(s => s.Items)
                .WithOne()

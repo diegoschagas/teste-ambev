@@ -13,10 +13,25 @@ public static class ApplicationDbContextSeed
                 date: DateTime.UtcNow.AddDays(-2),
                 customer: "John Doe",
                 branch: "Porto Alegre",
+                status: Domain.Enums.SaleStatus.Active,
                 items: new List<SaleItem>
                 {
-                    new SaleItem("Beer 350ml", 10, 4.50m, 0),
-                    new SaleItem("Soda 2L", 2, 7.00m, 1.00m)
+                    new SaleItem
+                    {
+                        Product = "Beer 350ml",
+                        Quantity = 10,
+                        UnitPrice = 4.50m,
+                        Discount = 0,
+                        Status = Domain.Enums.SaleStatus.Active
+                    },
+                    new SaleItem
+                    {
+                        Product = "Soda 2L",
+                        Quantity = 2,
+                        UnitPrice = 7.00m,
+                        Discount = 1.00m,
+                        Status = Domain.Enums.SaleStatus.Active
+                    }
                 }
             )
             {
@@ -28,9 +43,17 @@ public static class ApplicationDbContextSeed
                 date: DateTime.UtcNow.AddDays(-1),
                 customer: "Jane Smith",
                 branch: "São Paulo",
+                status: Domain.Enums.SaleStatus.Active,
                 items: new List<SaleItem>
                 {
-                    new SaleItem("Energy Drink", 5, 8.00m, 0)
+                    new SaleItem
+                    {
+                        Product = "Energy Drink",
+                        Quantity = 5,
+                        UnitPrice = 8.00m,
+                        Discount = 0,
+                        Status = Domain.Enums.SaleStatus.Active
+                    }
                 }
             )
             {

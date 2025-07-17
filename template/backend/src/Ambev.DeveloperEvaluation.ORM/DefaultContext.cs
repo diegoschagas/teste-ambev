@@ -18,9 +18,6 @@ public class DefaultContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Sale>().Ignore(s => s.IsCancelled);
-        modelBuilder.Entity<SaleItem>().Ignore(s => s.IsCancelled);
-
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(modelBuilder);
     }

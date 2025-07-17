@@ -19,12 +19,12 @@ namespace Ambev.DeveloperEvaluation.Unit.Application.Sales
         private readonly CreateSaleHandler _handler;
         private readonly IMediator _mediator;
 
-        public CreateSaleHandlerTests(IMediator mediator)
+        public CreateSaleHandlerTests()
         {
             _saleRepository = Substitute.For<ISaleRepository>();
             _mapper = Substitute.For<IMapper>();
             _logger = Substitute.For<ILogger<CreateSaleHandler>>();
-            _mediator = mediator;
+            _mediator = Substitute.For<IMediator>(); 
 
             _handler = new CreateSaleHandler(_saleRepository, _mapper, _logger, _mediator);
             

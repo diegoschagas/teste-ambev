@@ -1,12 +1,13 @@
-﻿namespace Ambev.DeveloperEvaluation.Application.SaleItem.Cancel;
+﻿namespace Ambev.DeveloperEvaluation.Application.SaleItem.CancelSaleItem;
 
+using Ambev.DeveloperEvaluation.Application.Sales.Cancel;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-public class CancelItemHandler : IRequestHandler<CancelItemCommand, Unit>
+public class CancelItemHandler : IRequestHandler<CancelSaleItemCommand, CancelSaleItemResult>
 {
     private readonly ISaleRepository _saleRepository;
     private readonly ILogger<CancelItemHandler> _logger;
@@ -19,7 +20,7 @@ public class CancelItemHandler : IRequestHandler<CancelItemCommand, Unit>
         _mediator = mediator;
     }
 
-    public async Task<Unit> Handle(CancelItemCommand command, CancellationToken cancellationToken)
+    public async Task<CancelSaleItemResult> Handle(CancelSaleItemCommand command, CancellationToken cancellationToken)
     {
         var sale = await _saleRepository.GetByIdAsync(command.SaleId, cancellationToken);
         if (sale == null)
@@ -41,6 +42,14 @@ public class CancelItemHandler : IRequestHandler<CancelItemCommand, Unit>
 
         await _mediator.Publish(new ItemCancelledEvent(sale.Id, item.Id), cancellationToken);
 
-        return Unit.Value;
+        return new CancelSaleItemResult
+        {
+            SaleId = sale.Id,
+            TotalAmount = sale.TotalAmount,
+            ItemId = item.Id,
+            Product = item.Product,
+            Total = item.Total,
+            StatusDescription = item.Status.ToString(),
+        };
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.Cancel;
 
-public class CancelSaleHandler : IRequestHandler<CancelSaleCommand, Unit>
+public class CancelSaleHandler : IRequestHandler<CancelSaleCommand, CancelSaleResult>
 {
     private readonly ISaleRepository _saleRepository;
     private readonly ILogger<CancelSaleHandler> _logger;
@@ -21,13 +21,11 @@ public class CancelSaleHandler : IRequestHandler<CancelSaleCommand, Unit>
         _mediator = mediator;
     }
 
-    public async Task<Unit> Handle(CancelSaleCommand command, CancellationToken cancellationToken)
+    public async Task<CancelSaleResult> Handle(CancelSaleCommand command, CancellationToken cancellationToken)
     {
-        var sale = await _saleRepository.GetByIdAsync(command.SaleId, cancellationToken);
-        if (sale == null)
-            throw new KeyNotFoundException("Sale not found.");
+        var sale = await _saleRepository.GetByIdAsync(command.Id, cancellationToken)
+            ?? throw new KeyNotFoundException("Sale not found.");
 
-        // Mark sale as cancelled (assuming SaleStatus enum)
         sale.Status = SaleStatus.Cancelled;
 
         await _saleRepository.UpdateAsync(sale, cancellationToken);
@@ -36,6 +34,10 @@ public class CancelSaleHandler : IRequestHandler<CancelSaleCommand, Unit>
 
         await _mediator.Publish(new SaleCancelledEvent(sale.Id, sale.SaleNumber), cancellationToken);
 
-        return Unit.Value;
+        return new CancelSaleResult
+        {
+            SaleNumber = sale.SaleNumber,
+            Status = sale.Status,
+        };
     }
 }

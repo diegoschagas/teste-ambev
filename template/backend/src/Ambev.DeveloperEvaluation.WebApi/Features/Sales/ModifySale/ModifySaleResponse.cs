@@ -1,8 +1,10 @@
-﻿using Ambev.DeveloperEvaluation.Domain.Enums;
+﻿using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
+namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales.ModifySale;
 
-public class CreateSaleResult
+public class ModifySaleResponse
 {
     public Guid? Id { get; set; }
     public string? SaleNumber { get; set; } = string.Empty;
@@ -10,7 +12,9 @@ public class CreateSaleResult
     public string? Customer { get; set; } = string.Empty;
     public decimal? TotalAmount { get; set; }
     public string? Branch { get; set; } = string.Empty;
-    
     public SaleStatus Status { get; set; } = SaleStatus.Active; 
+    
+    public string StatusDescription { get; set; } = string.Empty; 
+
     public List<CreateSaleItemDto>? Items { get; set; }
 }

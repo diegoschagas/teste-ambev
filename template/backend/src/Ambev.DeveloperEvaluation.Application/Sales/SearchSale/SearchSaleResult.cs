@@ -1,4 +1,6 @@
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.SearchSale;
 
@@ -9,5 +11,9 @@ public class SearchSaleResult
     public DateTime? Date { get; set; }
     public string? Customer { get; set; } = string.Empty;
     public string? Branch { get; set; } = string.Empty;
+    public SaleStatus Status { get; set; } = SaleStatus.Active; 
+    
+    public string StatusDescription { get; set; } = string.Empty; 
+
     public List<CreateSaleItemDto>? Items { get; set; }
 }
