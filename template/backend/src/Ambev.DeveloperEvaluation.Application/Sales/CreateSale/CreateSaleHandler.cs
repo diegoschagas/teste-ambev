@@ -1,4 +1,5 @@
 ﻿using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using AutoMapper;
 using FluentValidation;
@@ -13,12 +14,14 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
     private readonly ISaleRepository _saleRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<CreateSaleHandler> _logger;
+    private readonly IMediator _mediator;
 
-    public CreateSaleHandler(ISaleRepository saleRepository, IMapper mapper, ILogger<CreateSaleHandler> logger)
+    public CreateSaleHandler(ISaleRepository saleRepository, IMapper mapper, ILogger<CreateSaleHandler> logger, IMediator mediator)
     {
         _saleRepository = saleRepository;
         _mapper = mapper;
         _logger = logger;
+        _mediator = mediator;
     }
     public async Task<CreateSaleResult> Handle(CreateSaleCommand command, CancellationToken cancellationToken)
     {
@@ -45,6 +48,8 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
 
         _logger.LogInformation("Event: SaleCreated - SaleNumber: {SaleNumber}", sale.SaleNumber);
 
+        await _mediator.Publish(new SaleCreatedEvent(sale.Id, sale.SaleNumber), cancellationToken);
+        
         return result;
     }
 

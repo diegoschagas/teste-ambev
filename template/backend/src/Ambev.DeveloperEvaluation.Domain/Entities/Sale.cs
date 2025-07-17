@@ -1,4 +1,6 @@
 ﻿using Ambev.DeveloperEvaluation.Domain.Common;
+using Ambev.DeveloperEvaluation.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ambev.DeveloperEvaluation.Domain.Entities;
 
@@ -10,7 +12,10 @@ public class Sale : BaseEntity
     public decimal TotalAmount { get; set; }
     public string Branch { get; set; }
     public List<SaleItem> Items { get; set; }
-    public bool IsCancelled { get; set; }
+
+    [NotMapped]
+    public bool IsCancelled { get; set; } = false;
+    public SaleStatus Status { get; set; } = SaleStatus.Active; // default
 
     public Sale() { }
 
