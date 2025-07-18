@@ -2,6 +2,7 @@
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Ambev.DeveloperEvaluation.ORM.Repositories;
 
@@ -43,6 +44,7 @@ public class SaleRepository : ISaleRepository
     public async Task<Sale> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var sale = await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Items)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 
@@ -88,7 +90,54 @@ public class SaleRepository : ISaleRepository
         if (sale == null)
             throw new ArgumentNullException(nameof(sale));
 
-        _context.Sales.Update(sale);
+        // Attach the parent Sale entity as modified
+        _context.Attach(sale);
+        _context.Entry(sale).State = EntityState.Modified;
+
+        // Load existing SaleItems from DB for this Sale
+        var existingItems = await _context.SaleItems
+            .Where(i => i.Id == sale.Id)
+            .ToListAsync(cancellationToken);
+
+        var incomingItems = sale.Items ?? new List<SaleItem>();
+        var incomingItemIds = incomingItems.Where(i => i.Id != Guid.Empty).Select(i => i.Id).ToHashSet();
+
+        // Process each incoming item
+        foreach (var incomingItem in incomingItems)
+        {
+            if (incomingItem.Id == Guid.Empty)
+            {
+                // New item
+                incomingItem.Id = Guid.NewGuid();
+                incomingItem.Id = sale.Id;
+                _context.Add(incomingItem);
+            }
+            else
+            {
+                // Existing item - attach and mark as modified
+                var existingItem = existingItems.FirstOrDefault(ei => ei.Id == incomingItem.Id);
+                if (existingItem != null)
+                {
+                    _context.Entry(existingItem).CurrentValues.SetValues(incomingItem);
+                }
+                else
+                {
+                    // Defensive: handle scenario where incoming references an item not found in DB
+                    incomingItem.Id = sale.Id;
+                    _context.Add(incomingItem);
+                }
+            }
+        }
+
+        // Identify and remove deleted items
+        var itemsToRemove = existingItems.Where(ei => !incomingItemIds.Contains(ei.Id)).ToList();
+        if (itemsToRemove.Any())
+        {
+            _context.RemoveRange(itemsToRemove);
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+
 }
