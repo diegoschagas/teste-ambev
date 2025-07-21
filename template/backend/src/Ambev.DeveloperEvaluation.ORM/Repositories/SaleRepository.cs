@@ -85,58 +85,79 @@ public class SaleRepository : ISaleRepository
         return await query.ToListAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Sale sale, CancellationToken cancellationToken)
+
+    public async Task UpdateAsync(Sale updatedSale, CancellationToken cancellationToken)
     {
-        if (sale == null)
-            throw new ArgumentNullException(nameof(sale));
+        // Start a transaction
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-        // Attach the parent Sale entity as modified
-        _context.Attach(sale);
-        _context.Entry(sale).State = EntityState.Modified;
-
-        // Load existing SaleItems from DB for this Sale
-        var existingItems = await _context.SaleItems
-            .Where(i => i.Id == sale.Id)
-            .ToListAsync(cancellationToken);
-
-        var incomingItems = sale.Items ?? new List<SaleItem>();
-        var incomingItemIds = incomingItems.Where(i => i.Id != Guid.Empty).Select(i => i.Id).ToHashSet();
-
-        // Process each incoming item
-        foreach (var incomingItem in incomingItems)
+        try
         {
-            if (incomingItem.Id == Guid.Empty)
+            var existingSale = await _context.Sales
+                .Include(s => s.Items)
+                .FirstOrDefaultAsync(s => s.Id == updatedSale.Id, cancellationToken);
+
+            if (existingSale == null)
+                throw new Exception("Sale not found");
+
+            // Update Sale fields
+            existingSale.Date = updatedSale.Date;
+            existingSale.Customer = updatedSale.Customer;
+            existingSale.Branch = updatedSale.Branch;
+            existingSale.Status = updatedSale.Status;
+
+            // Remove items that no longer exist in updated list
+            var updatedItemIds = updatedSale.Items.Select(i => i.Id).ToList();
+
+            var itemsToRemove = existingSale.Items
+                .Where(existingItem => !updatedItemIds.Contains(existingItem.Id))
+                .ToList();
+
+            _context.SaleItems.RemoveRange(itemsToRemove);
+
+            // Update existing items or add new items
+            foreach (var updatedItem in updatedSale.Items)
             {
-                // New item
-                incomingItem.Id = Guid.NewGuid();
-                incomingItem.Id = sale.Id;
-                _context.Add(incomingItem);
-            }
-            else
-            {
-                // Existing item - attach and mark as modified
-                var existingItem = existingItems.FirstOrDefault(ei => ei.Id == incomingItem.Id);
+                var existingItem = existingSale.Items.FirstOrDefault(i => i.Id == updatedItem.Id);
+
                 if (existingItem != null)
                 {
-                    _context.Entry(existingItem).CurrentValues.SetValues(incomingItem);
+                    // Update existing item
+                    existingItem.Product = updatedItem.Product;
+                    existingItem.Quantity = updatedItem.Quantity;
+                    existingItem.UnitPrice = updatedItem.UnitPrice;
+                    existingItem.Discount = updatedItem.Discount;
+                    existingItem.Total = (updatedItem.Quantity * updatedItem.UnitPrice) - updatedItem.Discount;
+                    existingItem.Status = updatedItem.Status;
                 }
                 else
                 {
-                    // Defensive: handle scenario where incoming references an item not found in DB
-                    incomingItem.Id = sale.Id;
-                    _context.Add(incomingItem);
+                    // Add new item
+                    var newItem = new SaleItem
+                    {
+                        Product = updatedItem.Product,
+                        Quantity = updatedItem.Quantity,
+                        UnitPrice = updatedItem.UnitPrice,
+                        Discount = updatedItem.Discount,
+                        Total = (updatedItem.Quantity * updatedItem.UnitPrice) - updatedItem.Discount,
+                        Status = updatedItem.Status
+                    };
+
+                    existingSale.Items.Add(newItem);
                 }
             }
-        }
 
-        // Identify and remove deleted items
-        var itemsToRemove = existingItems.Where(ei => !incomingItemIds.Contains(ei.Id)).ToList();
-        if (itemsToRemove.Any())
+            // Recalculate Sale total
+            existingSale.TotalAmount = existingSale.Items.Sum(i => i.Total);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
         {
-            _context.RemoveRange(itemsToRemove);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
-
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
 
